@@ -1,51 +1,54 @@
-require("dotenv").config();
-const express = require("express");
-const OpenAI = require("openai");
-const cors = require("cors");
-const path = require("path"); // IMPORTANTE: Para sa tamang file paths
+require('dotenv').config();
+console.log("-----------------------------------------");
+console.log("ANG TOKEN AY: ", process.env.GITHUB_TOKEN);
+console.log("-----------------------------------------");
+const express = require('express');
+const cors = require('cors');
+const OpenAI = require('openai');
+const path = require('path');
 
 const app = express();
-app.use(express.json());
+const port = 3000;
+
+// Middleware
 app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// 1. Dito natin sinasabi kung nasaan ang HTML files (Robust way)
-app.use(express.static(path.join(__dirname, "public")));
-
-// 2. Setup Token & OpenAI
-const token = process.env.GITHUB_TOKEN;
+// Initialize OpenAI client with GitHub Models configuration
 const client = new OpenAI({
   baseURL: "https://models.inference.ai.azure.com",
-  apiKey: token,
+  apiKey: process.env.GITHUB_TOKEN
 });
 
-// 3. API Route
-app.post("/api/chat", async (req, res) => {
-  const userMessage = req.body.message;
+// Chat endpoint
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
 
   try {
     const response = await client.chat.completions.create({
       messages: [
-        { role: "system", content: "You are a helpful, friendly AI assistant." },
-        { role: "user", content: userMessage },
+        { role: "system", content: "You are a helpful AI assistant." },
+        { role: "user", content: message }
       ],
       model: "gpt-4o",
+      temperature: 1,
+      max_tokens: 4096,
+      top_p: 1
     });
 
     res.json({ reply: response.choices[0].message.content });
-
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Failed to fetch response." });
+    console.error('Error calling API:', error);
+    res.status(500).json({ error: 'Failed to get response from AI' });
   }
 });
 
-// 4. Fallback: Kapag walang ibang route na tumama, ibigay ang index.html
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// 5. IMPORTANTE: Gamitin ang PORT ni Render (process.env.PORT)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Start server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
