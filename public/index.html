@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chika Loka AI by Billy Joe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL STYLES --- */
+        :root {
+            --primary-pink: #ff758c;
+            --secondary-pink: #ff7eb3;
+            --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --user-bubble: linear-gradient(to right, #ff758c, #ff7eb3);
+            --ai-bubble: #ffffff;
+            --text-dark: #4a4a4a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: var(--bg-gradient);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- CONTAINER (Glassmorphism Effect) --- */
+        .chat-container {
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px); /* Blur effect */
+            border-radius: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        /* --- HEADER --- */
+        .chat-header {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #d6336c; /* Dark pink text */
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #4cd137;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 5px #4cd137;
+        }
+
+        /* --- CHAT MESSAGES AREA --- */
+        .chat-messages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #ffb7b2;
+            border-radius: 10px;
+        }
+
+        /* --- MESSAGE BUBBLES --- */
+        .message {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            opacity: 0; /* Hidden initially for animation */
+            animation: popIn 0.4s forwards; /* Animation trigger */
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background-image: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background-color: var(--ai-bubble);
+            color: var(--text-dark);
+            border-bottom-left-radius: 5px;
+            border: 1px solid #ffe3e3;
+        }
+
+        /* --- INPUT AREA --- */
+        .input-area {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.6);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border-radius: 50px;
+            border: 2px solid #fad0c4;
+            background-color: white;
+            color: var(--text-dark);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-pink);
+            box-shadow: 0 0 8px rgba(255, 117, 140, 0.3);
+        }
+
+        button {
+            padding: 15px 30px;
+            background-image: var(--user-bubble);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 117, 140, 0.6);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: default;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- TYPING INDICATOR --- */
+        .typing-indicator {
+            padding: 10px 25px;
+            font-style: italic;
+            color: #888;
+            font-size: 0.8rem;
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="logo-area">
+                <span class="logo-icon">🤖</span>
+                <span class="logo-text">Chika Loka AI by Billy Joe Sablayan</span>
+            </div>
+            <div>
+                <span style="font-size: 0.8rem; color: #666; margin-right: 5px;">Online</span>
+                <span class="status-dot"></span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">Hi! I'm your pink AI assistant. Ask me anything! 🌸</div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">AI is thinking... 💭</div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.classList.add('message', sender);
+            
+            // Convert newlines to breaks for code formatting
+            div.innerHTML = text.replace(/\n/g, '<br>'); 
+            
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            userInput.value = '';
+            
+            // Disable input while waiting
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            typingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'ai');
+                } else {
+                    addMessage(data.reply, 'ai');
+                }
+            } catch (error) {
+                addMessage('Error: Could not connect to server.', 'ai');
+            } finally {
+                // Re-enable input
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                typingIndicator.style.display = 'none';
+                userInput.focus();
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
